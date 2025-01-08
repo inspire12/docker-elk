@@ -10,16 +10,22 @@ function err {
 	echo -e "\n[x] $1\n" >&2
 }
 
+# Start an expandable group in the GitHub Action log.
+# https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#grouping-log-lines
+function grouplog {
+	echo "::group::$1"
+}
+
+# End the current expandable group in the GitHub Action log.
+function endgroup {
+	echo '::endgroup::'
+}
+
 # Return the ID of the container running the given service.
 function container_id {
 	local svc=$1
 
-	local label
-	if [[ "${MODE:-}" == "swarm" ]]; then
-		label="com.docker.swarm.service.name=elk_${svc}"
-	else
-		label="com.docker.compose.service=${svc}"
-	fi
+	local label="com.docker.compose.service=${svc}"
 
 	local cid
 
@@ -51,25 +57,10 @@ function container_id {
 
 # Return the IP address at which a service can be reached.
 # In Compose mode, returns the container's IP.
-# In Swarm mode, returns the IP of the node to ensure traffic enters the routing mesh (ingress).
 function service_ip {
 	local svc=$1
 
 	local ip
-
-	if [[ "${MODE:-}" == "swarm" ]]; then
-		#ingress_net="$(docker network inspect ingress --format '{{ .Id }}')"
-		#ip="$(docker service inspect elk_"$svc" --format "{{ range .Endpoint.VirtualIPs }}{{ if eq .NetworkID \"${ingress_net}\" }}{{ .Addr }}{{ end }}{{ end }}" | cut -d/ -f1)"
-		node="$(docker node ls --format '{{ .ID }}')"
-		ip="$(docker node inspect "$node" --format '{{ .Status.Addr }}')"
-		if [ -z "${ip:-}" ]; then
-			err "Node ${node} has no IP address"
-			return 1
-		fi
-
-		echo "$ip"
-		return
-	fi
 
 	local cid
 	cid="$(container_id "$svc")"

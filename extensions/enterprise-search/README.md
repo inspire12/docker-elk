@@ -6,7 +6,7 @@ Elastic Enterprise Search is a suite of products for search applications backed 
 
 * 2 GB of free RAM, on top of the resources required by the other stack components and extensions.
 
-Enterprise Search exposes the TCP port `3002` for its Web UI and API.
+The Enterprise Search web application is served on the TCP port `3002`.
 
 ## Usage
 
@@ -31,17 +31,13 @@ secret_management.encryption_keys:
 secret_management.encryption_keys: [my_first_encryption_key, my_second_encryption_key, ...]
 ```
 
-> :information_source: To generate a strong encryption key, for example using the AES-256 cipher, you can use the
-> OpenSSL utility or any other online/offline tool of your choice:
+> [!NOTE]
+> To generate a strong random encryption key, you can use the OpenSSL utility or any other online/offline tool of your
+> choice:
 >
 > ```console
-> $ openssl enc -aes-256 -P
->
-> enter aes-256-cbc encryption password: <a strong password>
-> Verifying - enter aes-256-cbc encryption password: <repeat your strong password>
-> ...
->
-> key=<generated AES key>
+> $ openssl rand -hex 32
+> 680f94e568c90364bedf927b2f0f49609702d3eab9098688585a375b14274546
 > ```
 
 ### Enable Elasticsearch's API key service
@@ -57,13 +53,24 @@ add the following setting:
 xpack.security.authc.api_key.enabled: true
 ```
 
+### Configure the Enterprise Search host in Kibana
+
+Kibana acts as the [management interface][enterprisesearch-kb] to Enterprise Search.
+
+To enable the management experience for Enterprise Search, modify the Kibana configuration file in
+[`kibana/config/kibana.yml`][config-kbn] and add the following setting:
+
+```yaml
+enterpriseSearch.host: http://enterprise-search:3002
+```
+
 ### Start the server
 
 To include Enterprise Search in the stack, run Docker Compose from the root of the repository with an additional command
 line argument referencing the `enterprise-search-compose.yml` file:
 
 ```console
-$ docker-compose -f docker-compose.yml -f extensions/enterprise-search/enterprise-search-compose.yml up
+$ docker compose -f docker-compose.yml -f extensions/enterprise-search/enterprise-search-compose.yml up
 ```
 
 Allow a few minutes for the stack to start, then open your web browser at the address <http://localhost:3002> to see the
@@ -89,8 +96,9 @@ enterprise-search:
     ENT_SEARCH_DEFAULT_PASSWORD: {{some strong password}}
 ```
 
-> :warning: The default Enterprise Search password can only be set during the initial boot. Once the password is
-> persisted in Elasticsearch, it can only be changed via the Elasticsearch API.
+> [!WARNING]
+> The default Enterprise Search password can only be set during the initial boot. Once the password is persisted in
+> Elasticsearch, it can only be changed via the Elasticsearch API.
 
 For more information, please refer to [User Management and Security][enterprisesearch-security].
 
@@ -112,7 +120,7 @@ enterprise-search:
 Any change to the Enterprise Search configuration requires a restart of the Enterprise Search container:
 
 ```console
-$ docker-compose -f docker-compose.yml -f extensions/enterprise-search/enterprise-search-compose.yml restart enterprise-search
+$ docker compose -f docker-compose.yml -f extensions/enterprise-search/enterprise-search-compose.yml restart enterprise-search
 ```
 
 Please refer to the following documentation page for more details about how to configure Enterprise Search inside a
@@ -129,6 +137,8 @@ Docker container: [Running Enterprise Search Using Docker][enterprisesearch-dock
 [enterprisesearch-config]: https://www.elastic.co/guide/en/enterprise-search/current/configuration.html
 [enterprisesearch-docker]: https://www.elastic.co/guide/en/enterprise-search/current/docker.html
 [enterprisesearch-docs]: https://www.elastic.co/guide/en/enterprise-search/current/index.html
+[enterprisesearch-kb]: https://www.elastic.co/guide/en/kibana/current/enterprise-search-settings-kb.html
 
 [es-security]: https://www.elastic.co/guide/en/elasticsearch/reference/current/security-settings.html#api-key-service-settings
 [config-es]: ../../elasticsearch/config/elasticsearch.yml
+[config-kbn]: ../../kibana/config/kibana.yml
